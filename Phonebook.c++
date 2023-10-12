@@ -16,10 +16,11 @@ private:
 public:   
    //Constructor that accepts references to the names and number of a new person upon creation
    Person(const std::string& firstname, const std::string& lastname, const std::string& phonenumber)
-    : firstName(firstname), lastName(lastname), phoneNumber(phonenumber) {}
+      : firstName(firstname), lastName(lastname), phoneNumber(phonenumber) {}
 
+   //constructor that accepts references to only names for find function
    Person(const std::string& firstname, const std::string& lastname)
-   : firstName(firstname), lastName(lastname) {}
+      : firstName(firstname), lastName(lastname) {}
 
    std::string getFirstName() const { return firstName; }
    std::string getLastName() const { return lastName; }
@@ -27,74 +28,39 @@ public:
 
    void setPhoneNumber(const std::string& phone) { phoneNumber = phone; }
 
+   //ensures that names are being entered alphabetically according to last name
    bool operator<(const Person& other) const {
         if (lastName < other.lastName) return true;
         if (lastName == other.lastName && firstName < other.firstName) return true;
         return false;
     }
-   /*
-      This will overload the inequality operators in order to better compare 2 instances of Person
-      It makes it so that we can compare Person X and Person Y just by using the instance rather than
-      calling their first and lastnames at every comparison
-   */
-   // friend bool operator > (const Person& x, const Person& y) {
-   //    if (x.lastName == y.lastName){
-   //       return x.firstName > y.firstName;
-   //    } else {
-   //       return x.lastName > y.lastName;
-   //    }
-   // }
-
-   // friend bool operator < (const Person& x, const Person& y) {
-   //    if (x.lastName == y.lastName){
-   //       return x.firstName < y.firstName;
-   //    } else {
-   //       return x.lastName < y.lastName;
-   //    }
-   // }
 
 };
-
-/* The Treenode class is the class to be used for the Binary tree to be constructed as
-   part of the Book class. The Tree will be nodes that are people within the phonebook
-*/
-// class Treenode {
-//    public:
-//    Person person;
-//    Treenode* leftChild;
-//    Treenode* rightChild;
-
-   
-//    Treenode(const Person& newPerson)
-//    : person(newPerson), leftChild(nullptr), rightChild(nullptr) {}
-// };
 
 class Book {
    private:
 
    struct Treenode {
-        Person data;
-        Treenode* leftChild;
-        Treenode* rightChild;
-        Treenode(const Person& p) : data(p), leftChild(nullptr), rightChild(nullptr) {}
-    };
+      Person data;
+      Treenode* leftChild;
+      Treenode* rightChild;
+      Treenode(const Person& p) : data(p), leftChild(nullptr), rightChild(nullptr) {}
+   };
 
    Treenode* root;
 
    void insert(Treenode*& root, const Person& p) {
-        if (!root) root = new Treenode(p);
-        else if (p < root->data) insert(root->leftChild, p);
-        else insert(root->rightChild, p);
-    }
+      if (!root) root = new Treenode(p);
+      else if (p < root->data) insert(root->leftChild, p);
+      else insert(root->rightChild, p);
+   }
 
     void inorder(Treenode* root) {
-        if (!root) return;
-        inorder(root->leftChild);
-        std::cout << root->data.getFirstName() << " " << root->data.getLastName() << ": " << root->data.getPhoneNumber() << std::endl;
-        inorder(root->rightChild);
-    }
-
-//    Treenode* root{nullptr};
+      if (!root) return;
+      inorder(root->leftChild);
+      std::cout << root->data.getFirstName() << " " << root->data.getLastName() << ": " << root->data.getPhoneNumber() << std::endl;
+      inorder(root->rightChild);
+   }
 
    Treenode* deleteNode(Treenode* root, const Person& key) {
       if (!root) return root;
@@ -131,42 +97,39 @@ class Book {
    }
 
    Treenode* search(Treenode* root, const Person& key) {
-    if (!root || (root->data.getFirstName() == key.getFirstName() && root->data.getLastName() == key.getLastName())) 
-        return root;
-    if (key < root->data)
-        return search(root->leftChild, key);
-    return search(root->rightChild, key);
-}
+      if (!root || (root->data.getFirstName() == key.getFirstName() && root->data.getLastName() == key.getLastName())) 
+         return root;
+      if (key < root->data)
+         return search(root->leftChild, key);
+      return search(root->rightChild, key);
+   }
+
+   void saveInorderToFile(std::ofstream& file, Treenode* root) {
+      if (!root) return;
+      saveInorderToFile(file, root->leftChild);
+      file << root->data.getFirstName() << " "
+         << root->data.getLastName() << " "
+         << root->data.getPhoneNumber() << std::endl;
+      saveInorderToFile(file, root->rightChild);
+   }
 
    public:
-      Book() : root(nullptr) {}
+   Book() : root(nullptr) {}
 
    // Add: Adds a person’s name (first and last) and phone number to the phone book.
    /*
       Checks to see if the given node is null (always start at root)
       if it is then theres the open spot to add the new node
-      If it isn't then we compare if person is higher or lower alphabetically using our overloaded > <
+      If it isn't then we compare if person is higher or lower alphabetically using our operator <
       and recursively call the function again with the appropriate child
    */
    void add(const Person& p) { insert(root, p); }
-
-   // void addPerson(Treenode*& node, const Person& person){
-   //       if (node == nullptr) {
-   //          node = new Treenode(person);
-   //       } else if (person < node->person) {
-   //          addPerson(node->leftChild, person);
-   //       } else {
-   //          addPerson(node->rightChild, person);
-   //       }
-   // }
-
 
    // Remove: Deletes a given person’s phone number, given only the name. **Formerly delete, but delete is a keyword so we can't call then function that.
    void remove(const std::string& firstName, const std::string& lastName) {
       Person p(firstName, lastName);
       root = deleteNode(root, p);
    }
-
 
    // Find: Locates a person’s phone number, given only the person’s name.
    std::string find(const std::string& firstName, const std::string& lastName) {
@@ -178,12 +141,19 @@ class Book {
         return "Not Found";
    }
 
-
    // Change: Changes a person’s phone number given the person’s name and new phone number.
-      void change(){}
+   void changePhoneNumber(const std::string& firstName, const std::string& lastName, const std::string& newPhone) {
+      Person p(firstName, lastName);
+      Treenode* result = search(root, p); // Using the search function we added earlier
+      if (result) {
+         result->data.setPhoneNumber(newPhone);
+         std::cout << "Phone number updated successfully!" << std::endl;
+      } else {
+         std::cout << "Person not found in the phonebook." << std::endl;
+   }
+}
 
-
-   // Display: Displays (dumps) entire phone book in alphabetical order.
+   // Display: Dumps entire phone book in alphabetical order.
    void display(){
       inorderTraversal(root);
    }
@@ -193,21 +163,32 @@ class Book {
         inorder(root->leftChild);
         std::cout << root->data.getFirstName() << " " << root->data.getLastName() << ": " << root->data.getPhoneNumber() << std::endl;
         inorder(root->rightChild);
-      // if (node != nullptr){
-      //    inorderTraversal(node->leftChild);
-      //    std::cout << root->person.getFirstName() << " " << root->person.getLastName() << ": " << root->person.getPhoneNumber() << std::endl;
-      //    inorderTraversal(node->rightChild);
-      // }
    }
 
    void saveToFile(const std::string& filename) {
-         // Save BST to a text file using any tree traversal method.
+      std::ofstream file(filename);
+      if (!file.is_open()) {
+         std::cout << "Failed to open file" << std::endl;
+         return;
       }
-
-   void loadFromFile(const std::string& filename) {
-      // Load from file and build BST.
+      saveInorderToFile(file, root);
+      file.close();
+      std::cout << "Phonebook saved to " << filename << std::endl;
    }
 
+   void loadFromFile(const std::string& filename) {
+      std::ifstream file(filename);
+      if (!file.is_open()) {
+         std::cout << "Failed to open the file or current phonebook does not exist. Starting with an empty phonebook." << std::endl;
+         return;
+      }
+      std::string firstName, lastName, phoneNumber;
+      while (file >> firstName >> lastName >> phoneNumber) {
+         add(Person(firstName, lastName, phoneNumber));
+      }
+      file.close();
+      std::cout << "Phonebook loaded from " << filename << std::endl;
+   }
 };
 
 class UserInterface {
@@ -221,7 +202,8 @@ public:
     std::cout << "2. Display" << std::endl;
     std::cout << "3. Delete" << std::endl;
     std::cout << "4. Find" << std::endl;
-    std::cout << "5. Quit" << std::endl;
+    std::cout << "5. Change Phone Number" << std::endl;
+    std::cout << "6. Quit" << std::endl;
 }
 
 
@@ -254,7 +236,16 @@ public:
             }
             break;
          case 5:
+            std::cout << "Enter first name and last name of the person:" << std::endl;
+            std::cin >> fName >> lName;
+            std::cout << "Enter the new phone number:" << std::endl;
+            std::cin >> phone;
+            phonebook.changePhoneNumber(fName, lName, phone);
+            break;
+         case 6:
             phonebook.saveToFile("phonebook.txt");
+            std::cout << "Exiting the application" << std::endl;
+            exit(0);
             break;
          default:
             std::cout << "Invalid choice. Please try again." << std::endl;
@@ -262,12 +253,14 @@ public:
    }
 
    void start(){
+      // Load phonebook entries from file
+      phonebook.loadFromFile("phonebook.txt"); 
       int choice;
       do {
          displayMenu();
          std::cin >> choice;
          executeChoice(choice);
-      } while (choice != 5);
+      } while (choice != 6);
    }
 };
 
